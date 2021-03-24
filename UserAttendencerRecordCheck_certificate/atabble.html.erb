@@ -1,0 +1,39 @@
+<%= link_to image_tag("back.png", :alt => "Regresar", :title => "Regresar"),
+'/home/login' %> <%= link_to link_to image_tag("new.png"),
+new_volatility_question_path, :alt => "Adicionar", :title => "Adicionar" %>
+<br>
+<%= render 'vq_filter' %> 
+
+<table id="rounded-corner" class="clearboth">
+<table id="rounded-corner" class="clearboth">
+  <thead>
+    <tr>
+      <th class="rounded-company">Descripcion</th>
+      <th>Tipo</th>
+      <th>Actualización</th>
+      <th>Estado</th>
+      <th></th>
+      <th class="rounded-q4"></th>
+    </tr>
+  </thead>
+
+  <% @volatility_questions.each do |v|%>
+  <tr>
+    <td align="left"><%= v.description %></td>
+    <td><%= v.volatility_question_type.question_type_name %></td>
+    <td><%= v.updated_at.strftime("%m/%d/%Y") %></td>
+    <td><%= v.state == 0 ? 'Inactiva' : "Activa" %></td>
+    <td>
+      <%= link_to image_tag("edit.png"),edit_volatility_question_path(v.id) %>
+    </td>
+    <td>
+      <%= UserQuestion.where("volatility_question_id = ?", v.id).any? ?
+      image_tag("delete_gray.png") :
+      link_to(image_tag("delete.png"),volatility_question_path(v.id), method:
+      :delete,:confirm => "¿Seguro que desea borrar la pregunta? \n #{v.id}") %>
+    </td>
+  </tr>
+
+  <%end%>
+</table>
+

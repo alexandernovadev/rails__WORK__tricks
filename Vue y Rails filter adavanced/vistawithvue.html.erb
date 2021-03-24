@@ -1,0 +1,771 @@
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css" />
+<style>
+  body {
+    font-size: 13px;
+  }
+  .btn-ecer-bl {
+    text-decoration: none;
+    border: 0;
+    height: 35px;
+    background: #436aaf;
+    color: #fff !important;
+    width: 100px;
+    border-radius: 5px;
+    padding: 6px;
+    margin-top: 15px;
+    line-height: 25px;
+    box-sizing: border-box;
+    text-align: center;
+    text-decoration: none !important;
+  }
+
+  .filters__input {
+    background-color: #f4f4f4;
+    border: 1px solid #f1f1f1 !important;
+    transition: width 0.4s ease-in-out;
+  }
+  .filters__input:hover {
+    border: 1px solid #dddddd !important;
+  }
+  .filters__select {
+    position: absolute;
+    background-color: #f4f4f4;
+    width: calc(100% - 30px);
+    height: auto;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 9999;
+    cursor: pointer;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    transition: 0.3s;
+  }
+  .filters__label {
+    margin-top: 10px;
+  }
+  .filters__select option:hover {
+    border: 1px solid #dddddd !important;
+    background-color: #dddddd !important;
+  }
+  .filters__multiple--options {
+    border-radius: 2px;
+    background-color: #f4f4f4;
+    cursor: pointer;
+  }
+  input[type="text"] {
+    width: 100%;
+    padding: 12px 20px;
+    margin: 0 !important;
+    box-sizing: border-box;
+    background-color: transparent !important;
+    color: black;
+    border: 1px solid black !important;
+    border-radius: 25%;
+  }
+
+  input[type="text"]:focus {
+    background-color: white !important;
+    transition: width 0.4s ease-in-out;
+  }
+
+  input[type="date"] {
+    width: 110%;
+    margin: 0;
+    font-size: 10px;
+    padding: 1px 2px;
+    border: 2px solid #f6f6f6;
+    background: #f4f4f4;
+    outline: none !important;
+    border-radius: 25%;
+  }
+
+  input[type="date"]:focus {
+    background-color: white !important;
+    transition: width 0.4s ease-in-out;
+  }
+
+  .filter_input--multiple {
+    border: 10px solid red;
+  }
+
+  .filters__input--icon {
+    display: inline !important;
+    width: 20%;
+    font-size: 15px;
+    font-weight: 300;
+    cursor: pointer;
+  }
+
+  .aq {
+    border: 1px solid #161616;
+    border-radius: 50px;
+    cursor: pointer;
+    padding: 5px;
+    margin: 1px;
+  }
+
+  .btn-seach {
+    border-radius: 8px;
+    color: white;
+    background-color: #4caf50;
+    font-size: 13px;
+  }
+
+  .btn-seach:hover {
+    color: white;
+    font-weight: 400;
+  }
+
+  .e3-spin {animation: e3-spin 1s infinite linear;}
+  @keyframes e3-spin {
+  0% {transform: rotate(0deg);}
+  100% {transform: rotate(359deg);}
+  }
+
+  .loader{
+    position: fixed;
+    color: white;
+    padding: 0;
+    width: 20vw;
+    top: 25vh;
+    left: 50vw;
+    background-color:#436aaf;
+    z-index: 999;
+  }
+  .loader:hover{
+    color: white !important;
+    font-size: 1.05rem;
+  }
+  .desdehasta{
+    font-size: 12px;
+  }
+  .e3-animate-zoom {animation:animatezoom 0.02s}
+  @keyframes animatezoom{from{transform:scale(0)} to{transform:scale(1)}}
+
+  .muro__invisible{
+    position: absolute; 
+    height: 60vh;
+    width: 91vw; 
+    z-index: 888;
+   background-color: rgba(244, 244, 244, 0.388)
+  }
+
+  .tablenewheader{
+    background-color: #446cb3;
+    color: white;
+    text-align: center;
+    padding-top: 10px;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+  }
+  .tablenewdata {
+    text-align: center;
+    border-top: 0.03rem solid #9e9e9e !important; padding-top: 10px
+  }
+  .btntopup {
+    position: fixed;
+      right: 30px;
+      bottom: 10px;
+      width: 100%;
+      color: white;
+      text-align: center;
+  }
+</style>
+<% lang = current_user.localization.languaje%>
+<div class="clearfix mb-2"></div>
+<h3 class="h3_title">
+  Sabana de notas
+  <img alt="Plan de desarrollo" height="18" src="/images/arrow-up.png?1601849730" title="Plan de desarrollo"
+    width="18" />
+</h3>
+
+<a class="btn-ecer-bl mt-5" href="/ereports">
+  <i class="fa fa-arrow-left" style="color: white"></i>
+  <%=t('str_btn_regresar_'+lang)%>
+</a>
+
+<div id="sabana_grades">
+  <!--Loader-->
+  <button v-if="load" class="btn p-0 loader e3-animate-zoom" :style="loadbottom">
+      <i  class="fa fa-spinner e3-spin p-2" style="font-size: 18px; color: white"></i>
+      <span style="font-size: 16px;">{{titleloader}}</span>
+  </button>
+
+  <div  v-if="load" class="muro__invisible"></div>
+  <!--Filtros Compononent-->
+  <div class="row">
+    <filter-e3 v-for="(item, i) in filters__data" :key="i" 
+      :data_filter="item.data_filter" :label="item.label"
+      :tipo="item.tipo" :size="item.size" :clean="clean_fil" :closeall="close_all"
+      :pos="i" @send_ids="filtere3__data" @closeallfilter="cerrartodo"></filter-e3>
+  </div>
+
+  <!--Botones-->
+  <div class="mb-4" style="text-align: center" class="">
+    <button @click="getsize('data')" class="btn mt-5 px-2 btn-seach" :disabled="load"
+    style="background-color: #3f51b5 !important">
+      <i class="fa fa-search" style="color: white"></i>
+      {{translate.buscar|lower}}
+    </button>
+    <button class="btn mt-5 p-2 btn-seach" @click="getsize" :disabled="load">
+      <i v-if="setDisable" class="fa fa-spinner e3-spin pr-2" style="font-size: 25px; color: white"></i>
+      <i class="fa fa-file-excel-o" style="color: white"></i>
+      Exportar a excel
+    </button>
+    <button @click="clearfilter" class="btn btn-warning mt-5 p-2 btn-seach" :disabled="load"
+    style="background-color: #ff9800 !important">
+      <i class="fa fa-paint-brush" style="color: white"></i>
+      Limpiar
+    </button>
+    
+  </div>
+
+  <!-- Progress and -->
+  <div style="width: 18vw; margin: auto" v-if="percent_load > 0 && percent_load <100">
+    Creando {{sizeregister}} Registros 
+    <div class="progress">
+      <div class="progress-bar progress-bar-striped progress-bar-animated" 
+      role="progressbar" aria-valuenow="75"
+        aria-valuemin="0" aria-valuemax="100" :style="'width:'+percent_load+'%'"></div>
+    </div>
+  </div>
+
+  <!--Tabla-->
+  <div class="tablenew mt-5" v-if="data__table.length > 0">
+    <div class="w3-row tablenewheader" :style="fixheadtable">
+      <div class="w3-col" style="width: 8.3%"><p>Identificacion</p></div>
+      <div class="w3-col" style="width: 8.3%"><p>Nombre</p></div>
+      <div class="w3-col" style="width: 8.3%"><p>Compañia</p></div>
+      <div class="w3-col" style="width: 8.3%"><p>Cargo</p></div>
+      <div class="w3-col" style="width: 8.3%"><p>Area</p></div>
+      <div class="w3-col" style="width: 6.3%"><p>Localizacion</p></div>
+      <div class="w3-col" style="width: 8.3%"><p>Grupo</p></div>
+      <div class="w3-col" style="width: 8.3%"><p>Evaluacion</p></div>
+      <div class="w3-col" style="width: 10.3%"><p>Pregunta</p></div>
+      <div class="w3-col" style="width: 10.3%"><p>Respuestas</p></div>
+      <div class="w3-col" style="width: 6.3%"><p>status</p></div>
+      <div class="w3-col" style="width: 8.3%"><p>Respuesta</p></div>
+    </div>
+    <div class="w3-row tablenewdata" v-for="(item, index) in data__table" :key="index">
+      <div class="m-0 px-1 w3-col" style="width: 8.3%"><p>{{item[0]}}</p></div>
+      <div class="m-0 px-1 w3-col" style="width: 8.3%"><p>{{item[1]}}</p></div>
+      <div class="m-0 px-1 w3-col" style="width: 8.3%"><p>{{item[2]}}</p></div>
+      <div class="m-0 px-1 w3-col" style="width: 8.3%"><p>{{item[3]}}</p></div>
+      <div class="m-0 px-1 w3-col" style="width: 8.3%"><p>{{item[4]}}</p></div>
+      <div class="m-0 px-1 w3-col" style="width: 6.3%"><p>{{item[5]}}</p></div>
+      <div class="m-0 px-1 w3-col" style="width: 8.3%"><p>{{item[6]}}</p></div>
+      <div class="m-0 px-1 w3-col" style="width: 8.3%"><p>{{item[7]}}</p></div>
+      <div class="m-0 px-1 w3-col" style="width: 10.3%"><p>{{item[8]}}</p></div>
+      <div class="m-0 px-1 w3-col" style="width: 10.3%"><p>{{item[9]}}</p></div>
+      <div class="m-0 px-1 w3-col" style="width: 6.3%"><p>{{item[10]}}</p></div>
+      <div class="m-0 px-1 w3-col" style="width: 8.3%"><p>{{item[11]}}</p></div>
+    </div>
+    <div v-if="scroll > 620 " 
+      class="btntopup">
+      <button class="btn btn-success m-2" @click="window.scrollTo(0, 0)" 
+      style="float: right;outline: none; border-radius: 35px !important;">
+      <i class="text-white fa fa-arrow-up"></i>
+      </button>
+      </div>
+    <i v-if="getMoreDatascroll" class="fa fa-spinner e3-spin pr-2" 
+    style="font-size: 25px; color: black"></i> 
+  </div>
+
+
+</div>
+
+<script>
+  
+  $(window).scroll(function (e) {
+    this.app._data.scroll = window.scrollY;
+    // Llegando al final traiga mas data
+    if ($(window).innerHeight() + $(window).scrollTop() >= $("body").height() - 620) {
+      // console.log("Carga");
+      if (this.app.data__table.length > 0) {
+        this.app._data.getMoreDatascroll = true;
+      }
+    }
+  });
+
+  // Filters to vue
+  Vue.filter("lower", function (value) {
+    let val = value.toLowerCase();
+    return val.charAt(0).toUpperCase() + val.slice(1);
+  });
+
+  // Metodo Main
+  var app = new Vue({
+    el: "#sabana_grades",
+    data: {
+      filters__data: [],
+      translate: {
+        area: "<%= t('str_tiitle_area_'+lang)%>", 
+        location: "<%= t('str_tiitle_location_'+lang)%>", 
+        group: "<%= t('str_tiitle_group_'+lang)%>", 
+        company: "<%= t('str_tiitle_company_'+lang)%>", 
+        position: "<%= t('str_tiitle_position_'+lang)%>", 
+        evaluation: "<%= t('str_tiitle_evaluation_'+lang)%>", 
+        type_of_responses: "<%= t('str_tiitle_type_of_responses_'+lang)%>", 
+        note: "<%= t('str_tiitle_note_'+lang)%>", 
+        enrollment_date: "<%= t('str_tiitle_enrollment_date_'+lang)%>", 
+        charge_level: "<%= t('str_tiitle_charge_level_'+lang)%>", 
+        user: "<%= t('str_tiitle_user_'+lang)%>", 
+        type_of_question: "<%= t('str_tiitle_type_of_question_'+lang)%>",
+        buscar: "<%= t('str_anserQuestio_buscar_'+lang)%>" 
+      },
+      ids_filter : [],
+      load: false,
+      loadbottom: '',
+      clean_fil: false,
+      close_all: false,
+      titleloader:'',
+      data__table:[],
+      sizeregister:0,
+      paginate:{
+        ant: 0,
+        next: 100,
+      },
+
+      setDisable: false,
+      errors: "",
+      percent_load: 0,
+
+      fixheadtable: "",
+      scroll: 0,
+      getMoreDatascroll: false
+    },
+    watch: {
+      scroll: function (newVal, oldVal) {
+       if (newVal > 620) {
+        this.fixheadtable = "width:calc(100vw - 93px);position: fixed; top:0px;"
+       }else {
+        this.fixheadtable = ''
+       }
+      },
+      getMoreDatascroll: function (newVal, oldVal) {
+        console.log("cambia");
+       if (newVal == true && this.load == false ) {
+          this.getData()
+          console.log("SE VCARAGA VARIAS VECES");
+       }else {
+        this.fixheadtable = ''
+       }
+      }
+    },
+    methods: {
+      progres(per_second){
+        this.percent_load += per_second;
+        if (this.percent_load > 100) {
+        return false;
+        } else {
+          setTimeout(() => {
+            this.progres(per_second);
+          }, 1000);
+        }
+      },
+      cerrartodo(){
+        this.close_all = true;
+        setTimeout(() => (this.close_all = false), 200);
+      },
+      clearfilter(){
+        this.clean_fil = true;
+        for (const i in this.ids_filter) {
+          this.ids_filter[i] = []
+        }
+        this.render__filters({})
+        setTimeout(() => (this.clean_fil = false), 200);
+      },
+      renderloader(state, msg){
+        this.load = state
+        this.titleloader = msg
+      },
+      filtere3__data(value){
+        this.cerrartodo()
+        this.ids_filter[value.pos] = value.data;
+       
+        let params = this.make__params()
+        this.render__filters(params)
+      },
+      getsize(data){
+        this.data__table = []
+        this.renderloader(true, `Cargando datos ...`)
+        let params = this.make__params()
+        params.size = true;
+        this.get_data_rails(params)
+        .then(res=> {
+          this.sizeregister = res.count[0][0];
+           console.log("get size", res);
+           if (data == 'data') {
+            this.getData()
+           }else{
+            this.getExcel()
+           }
+           })
+        .catch(err => alert("Error del servidor getsize"))
+      },
+  
+      getData(){
+        let params = this.make__params()
+        params.onlydata = true;
+
+        if (this.data__table.length > 0) { 
+          this.paginate.ant = this.paginate.next +1
+          this.paginate.next = this.paginate.next + 100
+        }
+        params.next = this.paginate.next;
+        params.ant = this.paginate.ant;
+        
+        this.get_data_rails(params)
+        .then(res=> {
+          //console.log("get DATA", res.data);
+          res.data.forEach(element => {
+            this.data__table.push(element)
+          });
+          this.renderloader(false, ``)
+          this.getMoreDatascroll= false
+      
+        })
+        .catch(err => alert("Error del servidor getdata"))
+      },
+      getExcel(){
+        let r3_seconds = (135075 * 65) / 135075;
+        let per_second = parseInt(100 / +r3_seconds);
+        console.log("Sefundos", per_second);
+        this.progres(per_second)
+        this.renderloader(true, `Generando excel ...`)
+
+        this.data__table = []
+        let params = this.make__params()
+        params.excel = true;
+        this.get_data_rails(params)
+        .then(res=> {
+          let a = document.createElement("a");
+          a.href = "/" + res.url;
+          a.click();
+          a.remove();
+          this.percent_load = 100;
+          this.renderloader(false, '')
+          console.log("get EXCEL", res);
+          })
+        .catch(err => alert("Error del servidor"))
+      },
+      make__params(){
+        let ids_get = [];
+        for (const i in this.ids_filter) {
+          ids_get.push(this.ids_filter[i]);
+        }
+        parametros_toajax = {
+          area: ids_get[0],
+          cargo: ids_get[1],
+          level:ids_get[2],
+          user:ids_get[3],
+          company:ids_get[4],
+          group:ids_get[5],
+          localization:ids_get[6],
+          evaluation:ids_get[7],
+          grade:ids_get[8],
+          dateenroll:ids_get[9],
+          questiontype:ids_get[10],
+          typeresponses:ids_get[11],
+        }
+        return parametros_toajax
+      },
+      render__filters(data){ 
+        // loadbottom: 'top: 90vh !important;left: 5vw !important;',
+     
+        msg = this.filters__data.length > 0 ? "Ajustando" : "Cargando"
+        this.renderloader(true, `${msg} Filtros ...`)
+        this.filters_rails(data)
+        .then(res=>{
+          this.filters__data = []
+          // TODO optimizar este pedazo
+          //[0]
+          this.ids_filter.push([])
+          this.filters__data.push(
+            {data_filter: res.area,label: this.translate.area ,tipo: "multiple",
+            size: "3",ids_select: this.ids_filter[0]})
+          //[1]
+          this.ids_filter.push([])
+          this.filters__data.push(
+            {data_filter: res.cargo,label: this.translate.position ,tipo: "multiple",
+            size: "3",ids_select: this.ids_filter[1]})
+          //[2]
+          this.ids_filter.push([])
+          this.filters__data.push(
+            {data_filter: res.level_position,label: this.translate.charge_level ,tipo: "multiple",
+            size: "3",ids_select: this.ids_filter[2]})
+
+          //[3]
+          this.ids_filter.push([])
+          this.filters__data.push(
+            {data_filter: res.user,label: this.translate.user ,tipo: "multiple",
+            size: "3",ids_select: this.ids_filter[3]})  
+          //[4]
+          this.ids_filter.push([])
+          this.filters__data.push(
+            {data_filter: res.company,label: this.translate.company ,tipo: "multiple",
+            size: "3",ids_select: this.ids_filter[4]})
+          //[5]
+          this.ids_filter.push([])
+          this.filters__data.push(
+            {data_filter: res.group,label: this.translate.group ,tipo: "multiple",
+            size: "3",ids_select: this.ids_filter[5]})
+          //[6]
+          this.ids_filter.push([])
+          this.filters__data.push(
+            {data_filter: res.localization,label: this.translate.location ,tipo: "multiple",
+            size: "3",ids_select: this.ids_filter[6]})
+          //[7]
+          this.ids_filter.push([])
+          this.filters__data.push(
+            {data_filter: res.evaluation,label: this.translate.evaluation ,tipo: "multiple",
+            size: "3",ids_select: this.ids_filter[7]})
+          //[8]
+          this.ids_filter.push([])
+          this.filters__data.push(
+            {data_filter: [],label: this.translate.note ,tipo: "range",
+            size: "3",ids_select: this.ids_filter[8]})
+          //[9]
+          this.ids_filter.push([])
+          this.filters__data.push(
+            {data_filter: [],label: this.translate.enrollment_date ,tipo: "date",
+            size: "3",ids_select: this.ids_filter[9]})
+          //[10]
+          this.ids_filter.push([])
+          this.filters__data.push(
+            {data_filter: res.question_types,label: this.translate.type_of_question ,tipo: "multiple",
+            size: "3",ids_select: this.ids_filter[10]})
+          //[11]
+          this.ids_filter.push([])
+          this.filters__data.push(
+            {data_filter:  [{ id: 1, name: "Correcta" },{ id: 0, name: "Incorrecta" }],
+            label: this.translate.type_of_responses ,tipo: "multiple",
+            size: "3",ids_select: this.ids_filter[11]})
+          
+          this.renderloader(false, '')
+          // console.log(res);
+        })
+        .catch(err => alert("Error con el server"))
+      },
+
+      // Services
+      filters_rails(params) {
+        let url = "/treports/getdatafilters";
+        return new Promise((resolve, reject) => {
+          $.ajax({url: url,type: "POST",data: params,
+          success: function (result) {resolve(result);},error: function (error) {reject(error);}});
+        });
+      },
+      get_data_rails(params) {
+        let url = "/treports/getdatasabana";
+        return new Promise((resolve, reject) => {
+          $.ajax({url: url,type: "POST",data: params,
+          success: function (result) {resolve(result);},error: function (error) {reject(error);}});
+        });
+      },
+
+    },
+    mounted() {
+      this.render__filters({})
+    },
+  })
+
+
+
+  // Componente para crear filtros
+  Vue.component("filter-e3", {
+    props: ["data_filter", "label", "tipo", "size", "pos", "clean","closeall"],
+    data: function () {
+      return {
+        txt_search: "",
+        txt_search2: "",
+        value: [],
+        rangue: [],
+        dates: [],
+        open: false,
+        notabegin: 0,
+        notaend: 100,
+        enrollbegin: "",
+        enrollend: "",
+      };
+    },
+    computed: {
+      filter_search() {
+        return this.data_filter
+          ? this.data_filter.filter(
+            (data) =>
+              !this.txt_search ||
+              data.name.toLowerCase().includes(this.txt_search.toLowerCase())
+          )
+          : this.data_filter;
+      },
+      filter_search2() {
+        return this.data_filter
+          ? this.data_filter.filter(
+            (data) =>
+              !this.txt_search2 ||
+              data.name.toLowerCase().includes(this.txt_search2.toLowerCase())
+          )
+          : this.data_filter;
+      },
+    },
+    watch: {
+      closeall: function (newVal, oldVal) {
+        if (newVal) {
+          if (this.open) {
+            this.open = !this.open
+          }
+        }
+      },
+      clean: function (newVal, oldVal) {
+        if (newVal) {
+          this.value = [];
+          this.rangue = [];
+          this.dates = [];
+          this.notabegin = 0;
+          this.notaend = 100;
+          if (this.open) {
+            this.open = !this.open
+          }
+          (this.enrollbegin = ""), (this.enrollend = "");
+        }
+      },
+      notabegin: function (newVal, oldVal) {
+        this.rangue[0] = newVal;
+        this.rangue[1] = this.notaend;
+        this.$emit("send_ids", { pos: this.pos, data: this.rangue });
+      },
+      notaend: function (newVal, oldVal) {
+        this.rangue[0] = this.notabegin;
+        this.rangue[1] = newVal;
+        this.$emit("send_ids", { pos: this.pos, data: this.rangue });
+      },
+
+      enrollbegin: function (newVal, oldVal) {
+        this.dates[0] = newVal;
+        this.dates[1] = this.enrollend;
+        this.$emit("send_ids", { pos: this.pos, data: this.dates });
+      },
+      enrollend: function (newVal, oldVal) {
+        this.dates[0] = this.enrollbegin;
+        this.dates[1] = newVal;
+        this.$emit("send_ids", { pos: this.pos, data: this.dates });
+      },
+    },
+    template: `
+<div class="filters col-12" id="filter-12" :class="'col-sm-'+size">
+  <label class="filters__label">{{label | lower}}</label>
+  <div class="filters__input">
+    <div v-if="tipo == 'multiple'">
+      <div class="row p-0 m-0" style="background: #f4f4f4">
+        <div class="col-10 mt-1" @click="open = true">
+          <span v-if="value.length == 0" @click="openfilter" 
+          style="padding: 4px; display: block; cursor: pointer; font-size: 10px">
+            Seleccione {{label }}
+          </span>
+          <span class="aq badge badge-light" v-for="(com, i) in value" :key="i"
+            @click="removecompany(com, i);open = false;txt_search=''">
+            <b class="text-danger">X</b> {{ com.name | lower}}
+          </span>
+        </div>
+        <div class="col-2">
+          <span @click="open = !open" style="font-size: 20px; cursor: pointer" class="p-0 m-0">
+            <b>{{open ? 'x':'+' }}</b>
+          </span>
+        </div>
+        <div v-if="open" style="width: calc(100%) !important" class="">
+          <span v-if="data_filter.length == 0" class="text-gray px-2"><b>No hay datos, mejora tus Filtros !</b></span>
+          <input v-else type="text" :autofocus="open" placeholder="Search.." class="" v-model="txt_search" />
+          <div class="filters__select">
+            <option v-for="(companie, i) in filter_search" :key="i" class="" :value="companie.name"
+              @click="add_company(companie);open = false;txt_search=''">
+              {{ companie.name | lower }}
+            </option>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="tipo == 'single'">
+      <div class="row" style="width: calc(100%) !important">
+        <div class="col-10">
+          <input style="
+              border: none !important;
+              text-transform: capitalize !important;
+            " @focus="open = true; text_search2 = ''" placeholder="Buscar ..." v-model="txt_search2" type="text" />
+        </div>
+        <div class="col-1">
+          <span @click="open = !open; txt_search2 = ''; value = []" class="filters__input--icon">
+            <b v-if="value.length > 0">x</b>
+            <b v-else>{{open ? '&and;' : '&or;'}}</b>
+          </span>
+        </div>
+      </div>
+      <div v-if="open" class="filters__select">
+        <option v-for="(item, i) in filter_search2" :key="i" :value="item.id"
+          @click="txt_search2 = item.name;open = false; add_company(item)">
+          {{ item.name | lower }}
+        </option>
+      </div>
+    </div>
+    <div v-if="tipo == 'range'">
+      <div class="row desdehasta">
+        <div class="col-6 ">
+          <small style="color: gray;"><b>Desde</b></small> <b style="color: #757575"> ({{notabegin}})</b>
+          <input type="range" min="0" max="100" v-model="notabegin" style="width: 87% !important">
+        </div>
+        <div class="col-6">
+          <small style="color: gray"><b>Hasta</b></small><b style="color: #757575"> ({{notaend}})</b>
+          <input type="range" v-model="notaend" min="0" max="100" style="width: 87% !important">
+        </div>
+      </div>
+    </div>
+    <div v-if="tipo == 'date'">
+      <div class="row desdehasta">
+        <div class="col-6">
+          <small style="color: gray"><b>Desde</b></small>
+          <input type="date" name="dates" v-model="enrollbegin">
+        </div>
+        <div class="col-6">
+          <small style="color: gray"><b>Hasta</b></small>
+          <input type="date" name="dates3" v-model="enrollend">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>`,
+    methods: {
+      openfilter(){
+        this.open = true;
+        this.$emit("closeallfilter")
+      
+      },
+      add_company(val) {
+        let estarepetido = false;
+        for (let i = 0; i < this.value.length; i++) {
+          if (this.value[i].id == val.id) {
+            estarepetido = true;
+            break;
+          }
+        }
+        if (!estarepetido) {
+          this.value.push(val);
+        }
+        this.emitids();
+      },
+      removecompany(item, i) {
+        var setValue = this.value;
+        const lop = this.value.filter((data) => {
+          if (data.id != item.id) {
+            return data;
+          }
+        });
+        this.value = lop;
+        this.emitids();
+      },
+      emitids() {
+        const companiesids = this.value.map((data) => data.id);
+        this.$emit("send_ids", { pos: this.pos, data: companiesids });
+      },
+    },
+  });
+</script>

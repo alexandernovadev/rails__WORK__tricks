@@ -1,0 +1,122 @@
+<%count = 1%>
+<%id = 0%>
+<%
+
+
+values = "thistoric_evaluations.attempt_id , a.tenrollment_id, te.tevaluation_id, tev.nombre, thq.question_id,q.enunciado,
+anw.correcta,tha.user_answer ,a.grade, anw.respuesta ,te.user_id"
+
+where_filter = "te.user_id  > 0"
+
+anw_question = ThistoricEvaluation.joins("inner join attempts a on a.id = thistoric_evaluations.attempt_id")
+.joins("inner join tenrollments te on te.id = a.tenrollment_id")
+.joins("inner join tevaluations tev on tev.id = te.tevaluation_id")
+.joins("inner join thistoric_questions thq on thq.thistoric_evaluation_id = thistoric_evaluations.id")
+.joins("inner join thistoric_answers tha on tha.thistoric_question_id = thq.id")
+.joins("inner join questions q on q.id= thq.question_id")
+.joins("inner join answers anw on anw.id= tha.answer_id")
+.where(where_filter)
+.order("a.tenrollment_id,te.user_id DESC")
+.select(values)
+
+#query = Attempt.joins("inner join tenrollments ten on ten.id = attempts.tenrollment_id")
+#.joins("inner join tevaluations tev on tev.id = ten.tevaluation_id")
+#.joins("inner join users u on u.id = ten.user_id")
+#.joins("right join thistoric_evaluations the on the.attempt_id = attempts.id")
+#.select("attempts.id attemptid, ten.id tenid,ten.user_id, attempts.tenrollment_id, tev.nombre,tev.id tevid, attempts.grade agrade ,ten.grade,u.name uname, u.second_name usname")
+#.where("ten.user_id = 208")
+#.order(:tenrollment_id)
+%>
+<!-- .where("ten.user_id = 208") -->
+<b><%=anw_question.to_sql%></b><br>
+<b><%=anw_question.map{|x|x.user_id}.uniq%></b><br>
+<b>TOTAL<%=anw_question.size%></b>
+<br><br>
+<style>
+  .tabletest {
+    width: 100vw !important;  
+  }
+  .tabletest th {
+    border: 2px solid black !important;
+  }
+  .tabletest td {
+    border: 2px solid black !important;
+  }
+</style>
+<table class="tabletest">
+  <thead>
+    <tr>
+      <th>No. Intento</th>
+      <th>attempt_id</th>
+      <th>tenrollment_id</th>
+      <th>tevaluation_id</th>
+      <th>Usuario</th>
+      <th>nombre</th>
+      <th>question_id</th>
+      <th>enunciado</th>
+      <th>respuesta</th>
+      <th>correcta</th>
+      <th>user_answer</th>
+      <th>ESTADO</th>
+      <th>grade</th>
+    </tr>
+  </thead>
+  <tbody>
+      <%=attemptid = anw_question[0].attempt_id%>
+      <%=tenrollmentid =  anw_question[0].tenrollment_id%>
+      <%contador = 1%>
+
+    <%anw_question.each do |x|%>
+
+
+        <!--# COntador de Intentos-->
+        <%if   (tenrollmentid != x.tenrollment_id && attemptid != x.attempt_id)%>
+          <%contador = 1%>
+        <%elsif  (tenrollmentid == x.tenrollment_id && attemptid != x.attempt_id)%>
+          <%contador += 1%>
+        <%end%>
+        
+     
+
+      <tr>
+        <td><%=contador%></td>
+        <td><%=x.attempt_id%></td>
+        <td><%=x.tenrollment_id%></td>
+        <td><%=x.tevaluation_id%></td>
+        <td><%=User.find(x.user_id).name%></td>
+        <td><%=x.nombre%></td>
+        <td><%=x.question_id%></td>
+        <td><%=x.enunciado%></td>
+        <td><%=x.respuesta%></td>
+        <td><%=x.correcta%></td>
+        <td><%=x.user_answer%></td>
+        <td><%=(x.correcta == x.user_answer) ? "CORRECTA" : "INCORRECTA" %></td>
+        <td><%=x.grade%></td>
+      </tr>
+      <%attemptid = x.attempt_id%>
+      <%tenrollmentid = x.tenrollment_id%>
+      
+      
+    <%end%>
+  </tbody>
+
+</table>
+<br><br><br><br><br><br><br><br><br><br>
+
+<script>
+function get_data_filters(params) {
+  let url = "/treports/getdatasabana";
+        return new Promise((resolve, reject) => {
+          $.ajax({url: url,type: "POST",data: params,
+          success: function (result) {resolve(result);},error: function (error) {reject(error);}});
+        });
+}
+
+ get_data_filters({})
+ .then(res=>{
+   console.log("RES; ", res);
+ })
+  .catch(err=>{
+   alert("Error de filter")
+ })
+</script>

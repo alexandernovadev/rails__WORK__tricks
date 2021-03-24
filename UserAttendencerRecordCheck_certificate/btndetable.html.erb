@@ -1,0 +1,11 @@
+ <td align="center">
+    <% if  enrollment.name_file_certificate.blank? %>
+      NA
+    <% else %>
+      <a target="_blank" href="/course_schedules/download?file_path=<%=File.expand_path(".")+enrollment.name_file_certificate %>"
+      class="btn-button button--teal" title="Descargar Archivo">
+      <i class='fa fa-download' aria-hidden='true'></i>Descargar
+      </a>
+    <% end %>
+  </td>
+

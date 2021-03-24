@@ -1,0 +1,186 @@
+
+<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+<style>
+  .h3_title {
+    padding: 0px;
+    margin: 10px;
+    line-height: 140%;
+    font-size: 20px;
+    font-family: verdana,sans-serif;
+    font-weight: bold;
+  }
+  body {
+    font-family: verdana,sans-serif !important;
+    font-size: 13px;
+  }
+</style>
+<%lang = current_user.localization.languaje %>
+<h3><%= t('str_my_evaluations_' + lang) %></h3>
+
+<%= link_to image_tag("back.png", :alt => "Regresar", :title => "Regresar"), '/home/login' %>
+
+<% if @tenrollments.size == 0 %>
+  <!-- #Mesaje si no hay evaluaciones registradas -->
+  <div class="contenedor">
+    <div class="msg-info">
+      <%= t('str_text_1_me_' + lang) %> <span><%= t('str_text_2_me_' + lang) %></span> <%= t('str_text_3_me_ESP' + lang) %>
+    </div>
+  </div>
+<% else %>
+
+
+  <table id="rounded-corner" align="center" style ="clear: both; width: 70vw">
+    <thead>
+      <tr>
+        <th class="rounded-company"><%= t('str_text_2_me_' + lang) %></th>
+        <th>Curso</th>
+        <th>Usuario</th>
+        <th style="width: 8%"><%= t('str_date_ins_' + lang) %></th>
+        <th style="width: 8%"><%= t('str_date_limit_e_' + lang) %></th>
+        <th style="width: 5%">Nota</th>
+        <th style="width: 8%">Estado</th>
+        <th style="width: 8%"></th>
+        <th style="width: 8%" class="rounded-q4"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @tenrollments.each do |tenrollment| %>
+        <tr>
+          <td><%=tenrollment.tevaluation.nombre%></td>
+          <td>
+          <%namecurse =  TevaluationCourse.where('tevaluation_id = ?', tenrollment.tevaluation_id).first %>
+          
+          <%if namecurse.blank?%>
+            Sin curso asignado
+          <%else%>
+            <%=namecurse.course.name%>
+          <%end%>
+          </td>
+          <td><%=tenrollment.user.reverse_complete_name%></td>
+          <td><%=tenrollment.enroll%></td>
+          <td><%=tenrollment.limite%></td>
+          <td><%=tenrollment.grade%></td>
+          <td><%=tenrollment.tenrollment_status.name%></td>
+          <%intentos = Attempt.where("tenrollment_id = ? ",tenrollment.id).last%>
+          <td>
+          <%if !intentos.nil?%>
+             <%if tenrollment.limite < Date.today%>
+              EXPIRADA
+           
+            <%elsif intentos.grade == nil || intentos.grade == 0 %>
+            
+              <button class="btn btn-success" onclick="continue_attemp('<%=tenrollment.id%>','<%= intentos.id %>')">
+                Continuar Intento
+              </button> 
+            <%else%>
+              <button class="btn btn-primary" onclick="new_attemp('<%=tenrollment.id%>')">
+                Nuevo Intento
+              </button>
+            <%end%>
+          <%else%>
+              <button class="btn btn-primary" onclick="new_attemp('<%=tenrollment.id%>')">
+                Nuevo Intento
+              </button>       
+          <%end%>           
+          </td>
+          <td> 
+            <button class="btn btn-danger" data-toggle="modal" data-target="#modal-<%=tenrollment.id%>">
+              Ver Intentos
+            </button>
+           </td>
+        </tr>
+      <%end%>
+    </tbody>
+  </table>
+
+<% end %>
+
+
+<!-- Modales de intentos -->
+<% @tenrollments.each do |tenrollment| %>
+
+<%total_attempts = tenrollment.tevaluation.max_attempt + tenrollment.aditional_attempts%>
+<div class="modal fade" id="modal-<%=tenrollment.id%>" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background-color: #f4f4f4 !important;">
+      <div class="modal-header">
+        <h2 class="modal-title" ><b><%=tenrollment.tevaluation.nombre%></b></h2>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true" style="font-size: 30px !important" class="text-danger"><b>&times;</b></span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <small class="p-3 text-danger"> <b>Intentos permitidos <%=total_attempts%> </b></small> <br>
+        <table id="rounded-corner">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Fecha Inicio</th>
+              <th>Fecha Final</th>
+              <th>Nota</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <%intentos = Attempt.where("tenrollment_id = ? ",tenrollment.id).all%>
+            
+            <%if intentos.size == 0%>
+              <td><h3><b>Sin  intentos</b></h3></td>
+            <%else%>
+  
+              <%intentos.each_with_index  do |attempt, i|%>
+                <tr>
+                  <td><%=i+1%></td>
+                  <td><%= attempt.startdate.strftime('%Y-%m-%d')%></td>
+                  <td><%= attempt.endate.strftime('%Y-%m-%d')%></td>
+                  <td><%=attempt.grade%></td>
+                  <%if attempt.grade == 0 || attempt.grade == nil%>
+                    <td><button class="btn btn-info" disabled >EN CURSO</button></td>
+                  <%else%>
+                  <td><button class="btn btn-danger" disabled>FINALIZADO</button></td>
+                  <%end%>
+                </tr>
+              <%end%>
+            <%end%>
+          
+          </tbody>
+        </table>
+      
+      </div>
+        
+    </div>
+  </div>
+</div>
+<%end%>
+
+<br />
+
+<script>
+function continue_attemp(tenrrollment_id, attemp_id) {
+ link_course = "http://" + window.location.host + '/tevaluations/responder?tenrollment_id='+tenrrollment_id+'&attemp_id='+attemp_id
+ console.log("CONTNU", link_course);                                                                                                            
+ window.open(link_course,"_self");
+}
+function new_attemp(tenrrollment_id) {
+  console.log("NEWWW");
+
+  url_host = "/tevaluations/new_attempt";
+
+  data = {tenrrollment_id}
+
+  $.post(url_host,data)
+  .success(function( result,state ) {
+    console.log( "ID Intento: " + result.attemp_id);
+    
+    link_course = "http://" + window.location.host + '/tevaluations/responder?tenrollment_id='+tenrrollment_id+'&attemp_id='+result.attemp_id
+    window.open(link_course,"_self");
+    console.log(link_course);
+  })
+  .fail(function() {
+      console.log( "error falloeeee" );
+      alert('Error del servidor, tome un pantallazo y envielo a equipo de sorporte')
+  })
+
+
+}
+</script>

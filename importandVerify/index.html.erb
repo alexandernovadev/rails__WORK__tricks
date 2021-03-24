@@ -1,0 +1,236 @@
+<style>
+    .debug_dump {
+        display: none !important;
+    }
+
+    .ecertTable {
+        clear: both;
+        width: 90vw;
+        height: 55vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .ecertTable table {
+        width: 100%;
+    }
+
+    .ecertTable th {
+        font-size: 14px;
+    }
+
+    /* width */
+    .ecertTable::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    /* Track */
+    .ecertTable::-webkit-scrollbar-track {
+        box-shadow: inset 0 0 5px grey;
+        border-radius: 10px;
+    }
+
+    /* Handle */
+    .ecertTable::-webkit-scrollbar-thumb {
+        background: #446CB3;
+        border-radius: 10px;
+    }
+
+    /* Handle on hover */
+    .ecertTable::-webkit-scrollbar-thumb:hover {
+        background: rgb(55, 88, 144);
+    }
+    .ecert-animate-zoom {
+    animation: animatezoom 0.6s;
+    }
+    @keyframes animatezoom {
+    from {
+        transform: scale(0);
+    }
+    to {
+        transform: scale(1);
+    }
+    }
+    .ecert-animate-left {
+    position: relative;
+    animation: animateleft 0.4s;
+    }
+    @keyframes animateleft {
+    from {
+        left: -300px;
+        opacity: 0;
+    }
+    to {
+        left: 0;
+        opacity: 1;
+    }
+    }
+    .ecert-animate-fading {
+    animation: fading 0.6s;
+    }
+    @keyframes fading {
+    0% {
+        opacity: 0.1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        opacity: 1;
+    }
+    }
+</style>
+<div class="fix-infoecert mt-5">
+
+    <span class="mt-5">
+        <%= link_to '<i class="fa fa-chevron-circle-left" aria-hidden="true">
+        </i>Regresar'.html_safe, home_login_path, :title => "Regresar a Reportes Encuesta de Satisfacción",
+         :class => "btn-button button--indigo", :style => "float: left; margin-right: 5px;" %>
+        <b style="font-size: 20px">&nbsp; Importar Planilla de Asistencia</b>
+    </span>
+
+    <div class="row mt-5 px-5">
+        <div class="col-4 card">
+            <label for=""><b>Selecciona tu archivo Excel</b></label>
+            <%= form_tag({controller: "ImportPlanillaCapacitacion",
+            action: "import_plantilla_capacitacion"}, 
+            multipart: true, remote: true) do %>
+            <%= file_field_tag "xlsx_file" %>
+
+            <%= submit_tag("&#xf093; Subir Archivo".html_safe,:class=>"btn-button button--deep-purple fvalida",
+            :name=>"submit", style: "font-family: FontAwesome, verdana, sans-serif;") %>
+            <br>
+            <span class="msg-error text-danger">
+            </span>
+            <% end %>
+        </div>
+        <div class="col-2">
+            <label for=""><b>Descagar Plantilla excel</b></label> <br>
+            <%= form_tag '/ImportPlanillaCapacitacion/send_plantilla_demo_capacitacion', 
+                :style => "display: inline;" do %>
+                <%= submit_tag("&#xf1c3; Descargar Planilla".html_safe, :alt => "Exportar datos", 
+                :title => "Exportar datos",:class => "btn-button button--green", 
+                    :style => "font-family: FontAwesome, verdana, sans-serif; margin-top: 0; margin-right: 5px;") %>
+            <% end %>
+        </div>
+        <%color = '#17a2b8!important'%>
+        <%if @errorson || @plantillavalida%>
+            <%color = 'red'%>
+        <%elsif  @datason &&  !@errorson%>
+            <%color = '#4CAF50!important'%>
+        <%end%>
+        <div class="col-3" style="border: 2px solid <%=color%>">
+            <label for=""><b>Estado</b></label>
+            <label for=""><%= @quees%></label>
+            
+            <div>
+                <%if @errorson%>
+                <p class="text-danger ecert-animate-fading"><b>Hay errores !</b> </p>
+                <% elsif @datason &&  !@errorson%>
+                <p class="text-success ecert-animate-fading"><b>Cambios Exitosos !</b> </p>
+                <%elsif  @plantillavalida%>
+                 <p class="text-danger ecert-animate-fading"><b>La plantilla no es valida !</b> </p>
+                <%else%>
+                <p class="text-info ecert-animate-fading"><b>Sube tu planilla</b></p>
+                <%end%>
+            </div>
+        </div>
+    </div>
+
+    <div class="ecertTable ">
+    <% if @errorson%>
+    <span class="ecert-animate-left">
+        <h3 class="text-danger mt-5"><b>Lista de Errores</b> </h3><br>
+        <% @errorson.each do |t| %>
+            <% t.map do |k,v|%>
+               <p> <b><%= v%></b></p>
+            <%end%> 
+        <% end %>
+        </span>
+    <%end%> <br>
+     <%if @datason%>
+
+    <h4 class="my-3"><b>Tus Datos</b></h4>
+        <table id="rounded-corner" class="ecert-animate-zoom ecertTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Cedula</th>
+                    <th>ID Curso</th>
+                    <th>ID Programacion</th>
+                    <th>Fecha Inicio</th>
+                    <th>Fecha Final</th>
+                    <th>Progreso</th>
+                    <th>Nota</th>
+                </tr>
+            </thead>
+  
+                           
+            <tbody>
+                <% @datason.each_with_index do |data, index| %>
+                <tr>
+                    <td><%= index + 1%></td>
+                    <% data.map do |k,v|%>
+                        <%if v.nil?%>
+                            <td class="text-danger"><b>NO PUEDE ESTAR VACIO </b> </td>
+                        <%elsif k == "Cedula"%>
+                            <%if User.where(:identity => v).first%>
+                                <td><%=v%></td>
+                            <%else%>
+                                <td class="text-danger">Cedula No existe</td>
+                            <%end%>
+                        <%elsif k == "id_curso"%>
+                           <%if Course.where(:id => v).first%>
+                                <%@notamax = Course.where(:id => v).first.maxgrade%>
+                                <%@notamin = Course.where(:id => v).first.mingrade%>
+                                <td><%=v%> </td>
+                            <%else%>
+                                <td class="text-danger">ID de Curso No existe</td>
+                            <%end%>
+                        <%elsif k == "id_programacion_curso"%>
+                            <%if CourseSchedule.where(:id => v).first%>
+                                <td><%=v%></td>
+                            <%else%>
+                                <td class="text-danger">ID de Programacion No existe</td>
+                            <%end%>
+                        <%elsif k == "fecha_inicio"%>
+                            <%if v.class == DateTime%>
+                                <td><%= v.strftime("%Y-%m-%d")%></td>
+                             <%else%>
+                                <td class="text-danger"><b>(<%=v%>) Formato No Valido</b></td>
+                             <%end%>
+                        <%elsif k == "fecha_final"%>
+                             <%if v.class == DateTime%>
+                                <td><%= v.strftime("%Y-%m-%d")%></td>
+                             <%else%>
+                                <td class="text-danger"><b>(<%=v%>) | Formato No Valido</b></td>
+                             <%end%>
+                        <%elsif k == "progreso"%>
+                            <%if v.to_i>100%>
+                              <td class="text-danger">El PROGRESO NO PUEDE SER MAYOR A 100 </td>
+                            <%elsif v.to_i < 0%>
+                                <td class="text-danger">El PROGRESO NO PUEDE SER MENOR A 0 </td>
+                            <%else%>
+                                <td><%=v%></td>
+                            <%end%>
+                        <%elsif k == "nota"%>
+                            <%if v.to_i> @notamax.to_i%>
+                                <td class="text-danger">LA MAXIMA NOTA ES <%=@notamax%> </td>
+                            <%elsif v.to_i < 0%>
+                                <td class="text-danger">LA NOTA debe ser mayor a cero </td>
+                     
+                            <%else%>
+                                <td><%=v%></td>
+                            <%end%>
+                          
+                        <%end%>
+                    <%end%>
+                </tr>
+                <% end %>
+            </tbody>
+        </table>
+     <%end%>
+    </div>
+
+</div>

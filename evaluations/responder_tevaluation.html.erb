@@ -1,0 +1,504 @@
+<link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" 
+integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+<%
+    tmp = Tenrollment.find(params[:tenrollment_id])
+    tiempo = tmp.timeleft.to_i
+%>
+
+<style>
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    box-shadow: none; 
+    border-radius: none;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1A237E;!important; 
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #1A237E;; 
+  }
+  .bg-azul{
+    background-color: #1A237E !important;
+  }
+</style>
+
+<script language="JavaScript">
+  
+    var incrementTime = 1;
+    var seconds = String("<%= tiempo %>");
+    var cada_minuto = 0;
+
+    function contador() {
+
+        cada_minuto += 1
+
+        seconds -= incrementTime;
+        // multiply by 1000 because Date() requires miliseconds
+        var date = new Date(seconds * 1000);
+        var hh = date.getUTCHours();
+        var mm = date.getUTCMinutes();
+        var ss = date.getSeconds();
+      
+        if (hh < 10) {
+            hh = "0" + hh;
+        }
+        if (mm < 10) {
+            mm = "0" + mm;
+        }
+        if (ss < 10) {
+            ss = "0" + ss;
+        }
+        // This formats your string to HH:MM:SS
+        var time_actual = hh + ":" + mm + ":" + ss;
+
+        $("#countdown").html(time_actual);
+        console.log("->",time_actual);
+
+        if (hh == 0 && mm == 0 && ss == 0) {
+            clearInterval(detener);
+    
+            url_host = "/tevaluations/save_time";
+      
+            $.post(url_host, {tenrollment_id: String("<%= params[:tenrollment_id] %>")
+            }, function(data) {
+                $(this).html(data);
+            })
+
+        }else {
+          if (cada_minuto == 60) {
+            url_host = "/tevaluations/save_time";
+            data = {tenrollment_id: String("<%= params[:tenrollment_id] %>"), tiempo: time_actual}
+
+            $.post(url_host,data)
+            .success(function( result,state ) {
+
+              console.log( "status" + state);
+          
+            })
+            .fail(function() {
+              console.log( "error al guardar el tiempo" );
+              alert('Error del servidor (save time), tome un pantallazo y envielo al equipo de sorporte')
+            })
+          
+            console.log("Guardaaa b");
+            cada_minuto = 0
+          }
+        }
+
+    }
+
+    var detener = setInterval('contador()', 1000);
+
+
+</script>
+
+<%lang = current_user.localization.languaje %>
+
+<!-- CODE OPTIMIZED -->
+<div class="pt-3 mx-auto" style="width: 80vw; height: 80vh;">
+
+    <% evaluation =  Tevaluation.find(Tenrollment.find(params[:tenrollment_id]).tevaluation_id)%>
+
+    <div class="p-2" style="height: 8vh;">
+        <div class="row">
+            <div class="col-4">
+                <strong><%= t('str_evaluation_' + lang) %>: <%= evaluation.nombre %> </strong>
+            </div>
+            <div class="col-4">
+                <strong class="float-right text-primary p-2 ">
+                  Intento No.<%=Attempt.where('tenrollment_id = ?',params[:tenrollment_id]).all.size%>
+                </strong>
+            </div>
+            <div class="col-4">
+                <strong class="float-left border border-primary text-primary p-2"> <strong>
+                   <%= t('str_time_left_' + lang) %>: 
+                </strong><span id="countdown"></span></strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" style="height: 72vh;">
+
+        <% thistoric_evaluation_actual = ThistoricEvaluation.where("user_id = ? and tenrollment_id = ? and attempt_id = ?", 
+        session[:user_id], params[:tenrollment_id], @attempt.id).first
+
+        preguntas_list =  thistoric_evaluation_actual.questions_list.split('//')
+
+        # Preguntas Aleatorias ????
+        preguntas_list = evaluation.random_questions == 1 ? preguntas_list.shuffle : preguntas_list
+
+        %>
+
+        <div class="col-4 card p-0" style="height: 72vh;">
+
+            <div class="p-3 card-header" style="height: 8vh;">
+                <%= t('str_questions_list_' + lang) %>
+                <span class="float-right border border-secondary p-1"><small>Total Preguntas</small> <b><%=preguntas_list.size%></b></span>
+            </div>
+
+            <div class="div-preguntas" style="height: 55vh; overflow-y: scroll;">
+                
+
+                <div class="list-group" id="list-tab" role="tablist">
+                    <% preguntas_list.each.with_index do |id_pregunta, index|%>
+                    <% pregunta = Question.find(id_pregunta) %>
+                    <!-- active  esta es la clase para activar-->
+                    <button onclick="currentDiv(<%=index + 1%>)" 
+                            class="btnQuestion list-group-item list-group-item-action" 
+                            data-toggle="list" role="tab" aria-controls="home">
+
+                        <i class="fa fa-bookmark text-success" id="book-<%=id_pregunta%>" style="display:none"></i>
+                        <%=pregunta.titulo %>
+                    </button>
+                    <%end%>
+
+                </div>
+            </div>
+
+            <div class="mx-auto" style="height: 8vh;">
+                <button class="btn bg-azul left text-white" onclick="plusDivs(-1)">&#10094;</button>
+                <button class="btn bg-azul right text-white" onclick="plusDivs(1)" >&#10095;</button>
+            </div>
+
+        </div>
+
+        <div class="col-8 px-5 " style="height: 72vh;overflow-y: scroll; font-size: 17px !important;">
+            <%@questions.each do |question| %>
+            <div class="Answers-ecert m-4">
+                <%@question_actual = Question.find(question.id) %>
+                <%@question_type_actual = QuestionType.find(@question_actual.question_type_id) %>
+
+
+                <span><small>Categoria: </small> <%= question.tcategory.nombre %></span><br>
+                <span><br><%= @question_actual.enunciado %></span><br><br>
+                <small><b><%= @question_actual.instrucciones %> </b></small> 
+                <br><br>
+
+                <!-- Verificar si el usuario, ya tenia rta guardadas -->
+                <%thistoric_question = ThistoricQuestion.where("thistoric_evaluation_id = ? AND question_id = ?",
+                  thistoric_evaluation_actual.id, question.id).first%>
+
+                <!-- Preguntar si quiere mostrar rtas aleatorias -->
+
+                <% respuestas_list = Answer.where('question_id = ?',question.id).all
+                   respuestas_list = evaluation.random_answers == 1 ? respuestas_list.shuffle : respuestas_list 
+                %>
+                
+                <%unless thistoric_question.nil?%>
+
+                  <script>document.getElementById("book-<%=@question_actual.id%>").style.display = "block"</script>
+
+                  <%rta_check_user = ThistoricAnswer.where('thistoric_question_id = ?',thistoric_question.id).all%>
+
+
+                  <% respuestas_list.each do |answer| %>
+                   
+                        <!--Evalua que tipo de pregunta 1 Unica RTA , 2 Seleccion Multiple USER CHECH--> 
+                        <%if @question_type_actual.id == 1%>
+
+                          <%has_check = rta_check_user.select {|rta| (answer.id == rta.answer_id) && rta.user_answer == 1 }.first%>
+                           <div class="form-check">
+                            <%if has_check %>
+                              <input class="form-check-input input-form-<%=question.id%>" type="radio" 
+                              name="input-<%=question.id%>" value="<%=answer.id%>" checked>
+                            <%else%>
+                              <input class="form-check-input input-form-<%=question.id%>" type="radio" 
+                              name="input-<%=question.id%>" value="<%=answer.id%>">
+                            <%end%>
+                         
+
+                            <label class="form-check-label">
+                                <%=answer.respuesta%>
+                            </label>
+                          </div>
+                        <%elsif @question_type_actual.id == 2%>
+                          <%has_check = rta_check_user.select {|rta| (answer.id == rta.answer_id) && rta.user_answer == 1 }.first%>
+                             <div class="form-check">
+                            <%if has_check%>
+                              <input class="form-check-input input-form-<%=question.id%>" type="checkbox" 
+                              name="input-<%=question.id%>"  
+                              value="<%=answer.id%>" checked>
+                            <%else%>
+                              <input class="form-check-input input-form-<%=question.id%>" type="checkbox" 
+                              name="input-<%=question.id%>"  
+                               value="<%=answer.id%>">
+                            <%end%>
+                      
+                            <label class="form-check-label">
+                                <%=answer.respuesta%>
+                            </label>
+                          </div>
+                        <%end%>
+                    
+                  <%end%>
+
+                <%else%>
+                  <% respuestas_list.each do |answer| %>
+                    <div class="form-check">
+                        <br>
+                        <!--Evalua que tipo de pregunta 1 Unica RTA , 2 Seleccion Multiple RTA SIN CHECH-->
+                        <%if @question_type_actual.id == 1%>
+                          <input class="form-check-input input-form-<%=question.id%>" type="radio" name="input-<%=question.id%>" 
+                          value="<%=answer.id%>">
+              
+                        <%elsif @question_type_actual.id == 2%>
+                          <input class="form-check-input input-form-<%=question.id%>" type="checkbox" name="input-<%=question.id%>" 
+                          value="<%=answer.id%>">
+                        <%end%>
+                          <label class="form-check-label" for="exampleRadios1">
+                             <%=answer.respuesta%>
+                          </label>
+                    </div>
+                  <%end%>
+                <%end%>
+
+                <div class="my-4">
+                    <span id="msg-error-nil-<%=question.id%>" class="text-danger"></span>
+                    <button class="float-right btn btn-danger" onclick="send_rta('<%= question.id%>')" id="btn-save-<%=question.id%>">
+                      Guardar
+                    </button>
+                </div><br><br>
+            </div>
+            <%end%>
+            
+        </div>
+
+    </div>
+
+    <img class="img-fluid mt-4" alt="Evalacion de Conocimientos" src="/images/ecert.png?1599253491">
+
+    <button class="mx-auto btn btn-outline-danger" id="btn-evaluar" onclick="get_grade()" style="display: none">
+      Finalizar Evaluacion
+    </button>
+
+    <!--button class="float-right mt-2 mr-5 btn btn-info" onclick="window.close()">Terminar en otro momento</button-->
+
+</div>
+
+
+<!-- Modal Para ver resultadors-->
+
+<button style="display:none" class="btn btn-primary" id="staticModalnota-ecert"
+data-toggle="modal" data-target="#staticBackdrop"></button>
+
+<div class="modal fade" id="staticBackdrop" data-backdrop="static" data-keyboard="false" 
+tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+  <div id="msg-results">
+  </div>
+</div>
+
+<script>
+    // Habilita en btn finalizar si todas las rta estan respondidas
+    '<%=@btn_finish%>' ==  'true' ? document.getElementById('btn-evaluar').style.display = "block": ''
+
+    var slideIndex = 1;
+    showDivs(slideIndex);
+
+    function plusDivs(n) {
+        showDivs(slideIndex += n);
+    }
+
+    function currentDiv(n) {
+        showDivs(slideIndex = n);
+    }
+
+    function showDivs(n) {
+        var i;
+        var x = document.getElementsByClassName("Answers-ecert");
+        var dots = document.getElementsByClassName("btnQuestion");
+        if (n > x.length) {
+            slideIndex = 1
+        }
+        if (n < 1) {
+            slideIndex = x.length
+        }
+
+        for (i = 0; i < x.length; i++) {
+            x[i].style.display = "none";
+        }
+
+        // Esto pone el botton en rojo 
+        for (i = 0; i < dots.length; i++) {
+            dots[i].className = dots[i].className.replace(" bg-azul text-white", "");
+        }
+        x[slideIndex - 1].style.display = "block";
+        dots[slideIndex - 1].className += " bg-azul text-white";
+        dots[slideIndex - 1].click()
+
+        // Scroll magico jajajajjajaja
+        document.querySelector('.div-preguntas').scrollTop = (slideIndex - 1)* (dots.length + 60);
+      
+    }
+
+    function send_rta(id_question) {
+      divs = document.getElementsByClassName("input-form-"+id_question)
+      div_msg_error = document.getElementById('msg-error-nil-'+id_question)
+      btn_save = document.getElementById('btn-save-'+id_question)
+      btn_end_eval = document.getElementById('btn-evaluar')
+
+      btn_save.innerHTML = '<i class="fa fa-spinner fa-spin fa-2x text-white" ></i> Guardando'
+
+       var null_rta = false;
+       var data_answer_ids = []
+       var data_user_answer = []
+
+       // Capturar rta's
+       for (i = 0; i < divs.length; i++) {
+
+         // Verifica que el user haya marcado alguna rta
+         if(divs[i].checked){
+           null_rta = true
+         }
+         data_answer_ids.push(divs[i].value);
+         data_user_answer.push(divs[i].checked? 1 : 0);
+      
+        }
+
+        console.log("IDs", data_answer_ids);
+        console.log("RTA user anwers", data_user_answer);
+        
+        
+        if(null_rta){
+       
+          div_msg_error.innerHTML = ""
+
+          // Desactiva el boton de guardar, para que no esten hay dele que dele
+          btn_save.disabled = true
+
+
+          url_host = "/tevaluations/saveDataEvaluation";
+          user_id = "<%= session[:user_id] %>";
+          tenrollment_id = "<%= params[:tenrollment_id] %>";
+          attempt_id = "<%= @attempt.id %>"
+
+          data = { 
+            user_id,
+            tenrollment_id,
+            attempt_id,
+            question_id: id_question,
+            data_answer_ids,
+            data_user_answer
+           }
+
+         $.post(url_host,data)
+          .success(function( result,state ) {
+             console.log( "Data 1: " + result.uno);
+             console.log( "Data 2: " + result.btn_end);
+
+            // Habilitar btn_ finish evalucion
+             if (result.btn_end) {
+               btn_end_eval.style.display = "block"
+             }
+
+             console.log( "status" + state);
+        
+            document.getElementById("book-"+id_question).style.display = "block"
+            btn_save.disabled = false
+            btn_save.innerHTML = 'Guardar'
+            plusDivs(1);
+
+          })
+          .fail(function() {
+             console.log( "error falloeeee" );
+             alert('Error del servidor, tome un pantallazo y envielo a equipo de sorporte')
+          })
+          
+        }else{
+          div_msg_error.innerHTML = "<b>! Debe selecionar una respuesta ¡</b>"
+          btn_save.disabled = false
+          btn_save.innerHTML = 'Guardar'
+        }
+
+    }
+
+    function get_grade() {
+      btn_finaliza = document.getElementById('btn-evaluar')
+      btn_showmodalresult = document.getElementById('staticModalnota-ecert')
+      div_results = document.getElementById("msg-results")
+      btn_finaliza.disabled = true
+      btn_finaliza.innerHTML = '<i class="fa fa-spinner fa-spin fa-2x text-danger"></i> Calificando'
+
+
+      url_host = "/tevaluations/resultados";
+      user_id = "<%= session[:user_id] %>";
+      tenrollment_id = "<%= params[:tenrollment_id] %>";
+      attempt_id = "<%= @attempt.id %>"
+
+      data = { 
+        user_id,
+        tenrollment_id,
+        attempt_id
+      }
+
+      $.post(url_host,data)
+      .success(function( result,state ) {
+          console.log( "Notamax: " + result.notamax);
+          console.log( "Notamin: " + result.notamin);
+          console.log( "Nota: " + result.nota);
+
+          if (parseInt(result.nota) >= parseInt(result.notamin)) {
+          div_results.innerHTML = `<div class="modal-dialog border border-success">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title mx-auto" id="staticBackdropLabel">Resultados Evaluacion</h5>
+                </div>
+                <div class="modal-body">
+                  <div class="border border-success" style="text-align: center; color: green">
+                    Felicitaciones Aprobaste la Evalacion <br>
+                    Su nota es <b> ${result.nota} </b>
+                  </div> 
+                </div>
+                <a href="/tenrollments" class="btn btn-primary text-white">Regresar</a>
+               
+
+                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true" style="font-size: 30px !important" class="text-danger"><b>&times;</b></span>
+                  </button>
+
+              </div>
+            </div>`
+
+          } else {
+          div_results.innerHTML = `<div class="modal-dialog border border-danger">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title mx-auto" id="staticBackdropLabel">Resultados Evaluacion</h5>
+                </div>
+                <div class="modal-body">
+                  <div class="border border-danger" style="text-align: center; color: red">
+                    Reprobaste la Evalacion <br>
+                    Su nota es <b> ${result.nota} </b>
+                  </div> 
+                </div>
+                <a href="/tenrollments" class="btn btn-primary text-white">Regresar</a>
+
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true" style="font-size: 30px !important" class="text-danger"><b>&times;</b></span>
+                  </button>
+                
+              </div>
+            </div>`
+            
+          }
+
+          btn_showmodalresult.click()
+          btn_finaliza.disabled = false
+          btn_finaliza.innerHTML = 'Finalizar Evaluacion'
+      })
+      .fail(function() {
+          console.log( "Error al evaluar" );
+          btn_finaliza.disabled = false
+          btn_finaliza.className.replace(" btn-success", "btn-danger");
+          btn_finaliza.innerHTML = '| ERROR SERVIDOR |'
+      })
+    }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" 
+integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" 
+integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>

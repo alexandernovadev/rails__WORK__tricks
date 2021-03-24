@@ -1,0 +1,22 @@
+       <td>
+              <% if enrollment.name_file_certificate.blank? %>
+                <%= form_tag({controller: "course_schedules",
+                action: "user_attendance_record_check_uploadcertificate"}, 
+                multipart: true, remote: true) do %>
+                  <%= file_field_tag "xml_file" %>
+                  <%= text_field_tag "eid",  enrollment.id , class:"hide--element"%>
+               
+                  <%= submit_tag("&#xf093; Cargar".html_safe,:class=>"btn-button button--deep-purple fvalida",
+                      :name=>"submit", style: "font-family: FontAwesome, verdana, sans-serif;") %>
+                      <br>
+                        <span class="msg-error text-danger">
+                 </span>
+                <% end %>
+              <% else %>
+               <a target="_blank" href="/course_schedules/download?file_path=<%=File.expand_path(".")+enrollment.name_file_certificate %>"
+                class="btn-button button--teal" title="Descargar Archivo">
+                <i class='fa fa-download' aria-hidden='true'></i>Descargar
+              </a>
+                
+              <% end %>
+            </td>

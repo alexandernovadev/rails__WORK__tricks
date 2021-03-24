@@ -1,0 +1,276 @@
+
+<br><br>
+
+<%
+a = ConfigurationComplianceParameters.select("project_id,company_id,
+color_button,text,text_en, text_pt, objectives_from,objectives_up,
+competences_from,competences_up,final_performance_from,final_performance_up,
+potential_from,potential_up")
+.where("project_id = 5")
+
+json = []
+a.each do |x|
+json << {
+:color_button => x.color_button,
+:company_id => x.company_id,
+:competences_from => x.competences_from,
+:competences_up => x.competences_up,
+:final_performance_from => x.final_performance_from,
+:final_performance_up => x.final_performance_up,
+:objectives_from => x.objectives_from,
+:objectives_up => x.objectives_up,
+:potential_from => x.potential_from,
+:potential_up => x.potential_up,
+:project_id => x.project_id,
+:text => x.text
+}
+
+end
+%>
+
+
+<script>
+	jsona =  "<%=json.to_json%>"
+	well = JSON.parse(jsona.replace(/&quot;/g,'"'));
+
+	function getbtn_color(company_id, modalidad, valoruser,lang, idimg) {
+		
+
+		for (const [key, value] of Object.entries(well)) {
+			if (value.company_id == parseInt(company_id)){
+				switch (modalidad) {
+					case 1:
+						min = value.competences_from
+						max = value.competences_up
+					break;
+				
+					case 2:
+						min = value.final_performance_from
+						max = value.final_performance_up
+					break;
+
+					case 3:
+						min = value.objectives_from
+						max = value.objectives_up
+					break;
+
+					case 4:
+						min = value.potential_from
+						max = value.potential_up
+					break;
+
+					default:
+						min = 0
+						max = 0
+					break;
+				}
+
+				if (parseInt(valoruser) >= min && parseInt(valoruser) < max) {
+					url = `/images/${value.color_button}`
+					$("#"+idimg).attr("src", url)
+					break
+				}
+			} 
+		}
+	}
+
+</script>
+<br><br>
+<table id="rounded-corner">
+<thead>
+	<tr>
+		<th>id</th>
+		<th>Nombre</th>
+		<th>Volatilidad</th>
+		<th>Potencial</th>
+		<th>Estado</th>
+		<th>Objetivos</th>
+		<th>Competencias</th>
+		<th>PDA</th>
+		<th>Desempeño Final</th>
+
+	</tr>
+</thead>
+<tbody>
+
+<% @userstest.each do |item| %>
+	<%
+		id = item.id
+		nombre = item.reverse_complete_name
+		volatilidad = item.volatility_score
+		potencial = item.potential_score
+		company_id = item.company_id
+
+		# Objetivos
+		cumpliance_obj,evaluation_users = compliance_evaluation_potencial_optimizeed(id,5,0,0)
+
+		# Competencias
+		compliance_competence = compliance_competence_potencial_users(id,5, 0, 0) 
+		exist_process = process_competences_completed(id, 5) 
+		value_compliance_competence = compliance_competence[:val_competence] 
+
+		#  Final Desempeño
+		final_performance = compliance_final_performance(id, 5, cumpliance_obj,value_compliance_competence )
+	
+		
+	%>
+	<tr>
+		<td><%=id%></td>
+		<td><%=nombre%></td>
+		<td>
+			<img id="img_<%=id%><%=company_id%>" width="10">
+			<script>getbtn_color("<%=company_id%>",4,"<%=volatilidad%>",'es',"img_<%=id%><%=company_id%>")</script>
+			<%=volatilidad%>
+		</td>
+		<td>
+			<img id="img_<%=id%><%=company_id%>_po" width="10">
+			<script>getbtn_color("<%=company_id%>",4,"<%=potencial%>",'es',"img_<%=id%><%=company_id%>_po")</script>
+			<%=potencial%>
+		</td>
+
+		<td>
+			<% icon, data = check_status_followup(evaluation_users.map {|e| e.id }.last) %>
+			<%= icon if data.to_i < 5 %>
+		</td>
+		<td>
+			<img id="img_<%=id%><%=company_id%>_obj" width="10">
+			<script>getbtn_color("<%=company_id%>",3,"<%=cumpliance_obj%>",'es',"img_<%=id%><%=company_id%>_obj")</script>
+			<%=cumpliance_obj%>
+		</td>
+
+		<td>
+			<% if exist_process %>
+				<img id="img_<%=id%><%=company_id%>_competences" width="10">
+				<script>getbtn_color("<%=company_id%>",1,"<%=value_compliance_competence%>",'es',"img_<%=id%><%=company_id%>_competences")</script>
+				<%=value_compliance_competence%>
+			<% else %>
+				Proceso Pendiente
+			<% end %>
+		</td>
+
+		<td>---</td>
+		<td>
+		<% if exist_process %>
+				<img id="img_<%=id%><%=company_id%>_final" width="10">
+				<script>getbtn_color("<%=company_id%>",2,"<%=final_performance%>",'es',"img_<%=id%><%=company_id%>_final")</script>
+				<%=final_performance%>
+			<% else %>
+				---
+			<% end %>
+			
+		</td>
+
+	</tr>
+<% end %>
+
+</tbody>
+
+</table>
+
+<img src="/images/example.png" alt="sirve">
+<%# /home/alex/Documentos/work/sites/pruebas/public/images/example.png %>
+
+<%
+
+
+  def index
+
+
+    # .where(users: {manager_id: 1286})
+    @userstest = User.joins("LEFT JOIN volatility_potential_results ON volatility_potential_results.user_id = users.id")
+    .select('users.name, users.second_name, users.id, users.company_id') 
+    .select('volatility_potential_results.volatility_score,volatility_potential_results.potential_score')
+    .order("users.second_name")
+
+    @user_data_types = UserDataType.all
+    @projects = Project.select("id,name").order(:name)
+    @evaluations = Evaluation.select("id,name").order(:name)
+    @surveys = Survey.select("id,name").order(:name)
+    @map_postion = PositionsMap.actives.select("id,name").order(:name) ## Cargos criticos
+    @positions = Position.select("id,name").order(:name)
+    @levl_psotions = Level.select("id,name").order(:name)
+    @position_types  = PositionType.actives.select("id,name")
+    @cost_centers   = CostCenter.actives.select("id,description")
+    @localizations  = Localization.actives.select("id,name").order(:name)
+    @areas  = Area.select("id,name").where("status = 1").order(:name)
+    @company = Company.select("id,name").where("status = 1").order(:name)
+    @groups = Group.select("id,name").where("status = 1").order(:name)
+    # @evaluador = Project.select("id,name").order(:name)
+
+
+    @users =  User.includes(:company,:localization,:position,:area)
+    .select("id, name,identity, email,manager_id, second_name,company_id,localization_id, position_id,area_id")
+    .order(:second_name)
+    # Filtrar Visibilidades
+    case current_user.profile_id      
+    when 3..11 # ADMINS
+      visibili =  Visibility.select("company_id,localization_id").where("user_id = ?",current_user.id)
+      
+      @users =  @users.where("company_id in (?) and localization_id in (?)",
+                visibili.map(&:company_id),visibili.map(&:localization_id) )
+    when 2 # SUBORDINADOS (User Normal profile 2)
+      # Mis subornidanos
+      @users =  @users.where("manager_id = ?",current_user.id)
+    end
+
+    ## FILTERSS
+    if params[:commit].include? "Exportar a excel"
+    
+      sheets = ['Desempeño Usuarios']
+      labelfieds = ['Usuario','Identificación','Email','Cargo','Localización','Área','Compañia','Jefe',
+      	'% Volatilidad','% Potencial','Estado Seguimientos','% Objetivos ','% Competencias']
+      @user_data_types.each do |grp| 
+				labelfieds.push(grp.name.to_s)
+			end
+			labelfieds.push('%Desempeño Final')
+  
+    
+      labels = [labelfieds]
+      models = [@users]
+      # Algoritmo bucleexcel 
+      report = Axlsx::Package.new
+      wb = report.workbook
+      sheets.each_with_index do |name_sheet,i_sheet|
+        
+        wb.add_worksheet(name: name_sheet.to_s) do |view|
+          title = wb.styles.add_style(:bg_color => "d1d0d0", :fg_color=>"000000", 
+          :sz=>10, :b=>true,  :border=> {:style => :thin, :color => "d1d0d0"}, :alignment=>{:horizontal => :left,:wrap_text => true})
+
+          wrapinif = wb.styles.add_style(:alignment => {:wrap_text => true,:horizontal => :left,:vertical => :top,},:sz=>10)
+          view.add_row labels[i_sheet], :style => title
+    
+          models[i_sheet].each do |usr|
+            row_data = []
+            row_data.push  usr.reverse_complete_name
+            row_data.push  usr.identity
+            row_data.push  usr.email
+            row_data.push  usr.position.name
+            row_data.push  usr.localization.name
+            row_data.push  usr.area.name
+            row_data.push  usr.company.name
+            row_data.push  User.select("name, second_name").find(usr.manager_id).reverse_complete_name
+
+            ## Report Info ##
+            # Volatitlity
+            volatility_potential = volatility_potential_result(usr.id, params[:project_id].to_i)
+            volatitulo_number = volatility_potential.nil? ? 0 : volatility_potential.volatility_score
+            row_data.push  volatitulo_number
+
+
+
+            # Add Array
+            view.add_row row_data, :style => wrapinif
+            view.column_widths 25,15,15,15,17,17,12
+            
+          end
+        end   
+      end
+    
+      # Enviar excel 
+      name_report = Time.zone.now.strftime('%m/%d/%y')+"_Desempeño_usuarios.xlsx"
+      send_data report.to_stream.read, type: "application/xlsx", filename: name_report 
+     
+    end if params[:commit]
+  end
+
+%>
